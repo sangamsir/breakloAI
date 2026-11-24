@@ -3,6 +3,9 @@ name: Build BreakloAI Android APK
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -21,7 +24,7 @@ jobs:
           unzip -q BreakloAI-Android-Web-Project.zip -d extracted
           test -f extracted/BreakloAI-Project/package.json
 
-      - name: Set up Node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -32,17 +35,29 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Install, bundle and generate Android project
+      - name: Install project dependencies
         working-directory: extracted/BreakloAI-Project
         run: |
           npm install --no-audit --no-fund
-          npm run build
-          npx cap add android
-          npx cap sync android
+          npm install --save-dev typescript --no-audit --no-fund
+
+      - name: Build web application
+        working-directory: extracted/BreakloAI-Project
+        run: npm run build
+
+      - name: Generate Android project
+        working-directory: extracted/BreakloAI-Project
+        run: npx cap add android
+
+      - name: Sync Android project
+        working-directory: extracted/BreakloAI-Project
+        run: npx cap sync android
 
       - name: Build debug APK
         working-directory: extracted/BreakloAI-Project/android
-        run: ./gradlew assembleDebug
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
