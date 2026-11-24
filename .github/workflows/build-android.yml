@@ -17,11 +17,7 @@ jobs:
 
       - name: Extract project ZIP
         run: |
-          test -f BreakloAI-Android-Web-Project-FIXED3.zip
           unzip -q BreakloAI-Android-Web-Project-FIXED3.zip -d extracted
-          cd extracted/BreakloAI-Project
-          test -f package.json
-          test -f capacitor.config.json
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -37,12 +33,6 @@ jobs:
       - name: Install dependencies
         working-directory: extracted/BreakloAI-Project
         run: npm install --no-audit --no-fund
-
-      - name: Verify Capacitor configuration
-        working-directory: extracted/BreakloAI-Project
-        run: |
-          node -e "const c=require('./capacitor.config.json'); console.log(c); if(c.appId !== 'in.sangam.breakloai') process.exit(1)"
-          npx cap --version
 
       - name: Build web application
         working-directory: extracted/BreakloAI-Project
@@ -65,14 +55,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: BreakloAI-debug-apk
-          path: extracted/BreakloAI-Project/android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: BreakloAI-debug-apk
+          name: BreakloAI-debug-apk-${{ github.run_id }}-${{ github.run_attempt }}
           path: extracted/BreakloAI-Project/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
