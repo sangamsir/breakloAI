@@ -3,8 +3,6 @@ name: Build BreakloAI Android APK
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 permissions:
   contents: read
@@ -12,6 +10,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -20,9 +19,9 @@ jobs:
         run: |
           test -f BreakloAI-Android-Web-Project-FIXED3.zip
           unzip -q BreakloAI-Android-Web-Project-FIXED3.zip -d extracted
-          test -f extracted/BreakloAI-Project/package.json
-          test -f extracted/BreakloAI-Project/capacitor.config.json
-          grep -q '"appId": "in.sangam.breakloai"' extracted/BreakloAI-Project/capacitor.config.json
+          cd extracted/BreakloAI-Project
+          test -f package.json
+          test -f capacitor.config.json
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -39,28 +38,37 @@ jobs:
         working-directory: extracted/BreakloAI-Project
         run: npm install --no-audit --no-fund
 
+      - name: Verify Capacitor configuration
+        working-directory: extracted/BreakloAI-Project
+        run: |
+          node -e "const c=require('./capacitor.config.json'); console.log(c); if(c.appId !== 'in.sangam.breakloai') process.exit(1)"
+          npx cap --version
+
       - name: Build web application
         working-directory: extracted/BreakloAI-Project
         run: npm run build
 
-      - name: Verify Capacitor config
-        working-directory: extracted/BreakloAI-Project
-        run: |
-          node -e "const c=require('./capacitor.config.json'); if(!c.appId) process.exit(1); console.log('Capacitor appId:', c.appId)"
-
       - name: Generate Android project
         working-directory: extracted/BreakloAI-Project
-        run: npx cap add android --config capacitor.config.json
+        run: npx cap add android
 
       - name: Sync Android project
         working-directory: extracted/BreakloAI-Project
-        run: npx cap sync android --config capacitor.config.json
+        run: npx cap sync android
 
       - name: Build debug APK
         working-directory: extracted/BreakloAI-Project/android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BreakloAI-debug-apk
+          path: extracted/BreakloAI-Project/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
