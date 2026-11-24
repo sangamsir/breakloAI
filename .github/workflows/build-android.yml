@@ -3,8 +3,6 @@ name: Build BreakloAI Android APK
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 permissions:
   contents: read
@@ -12,14 +10,15 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Extract project ZIP
         run: |
-          test -f BreakloAI-Android-Web-Project-FIXED.zip
-          unzip -q BreakloAI-Android-Web-Project-FIXED.zip -d extracted
+          test -f BreakloAI-Android-Web-Project-FIXED2.zip
+          unzip -q BreakloAI-Android-Web-Project-FIXED2.zip -d extracted
           test -f extracted/BreakloAI-Project/package.json
           test -f extracted/BreakloAI-Project/capacitor.config.js
 
@@ -62,3 +61,4 @@ jobs:
           name: BreakloAI-debug-apk
           path: extracted/BreakloAI-Project/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          
