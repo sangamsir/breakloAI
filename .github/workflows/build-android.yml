@@ -3,6 +3,8 @@ name: Build BreakloAI Android APK
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
@@ -10,17 +12,17 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Extract project ZIP
         run: |
-          test -f BreakloAI-Android-Web-Project-FIXED2.zip
-          unzip -q BreakloAI-Android-Web-Project-FIXED2.zip -d extracted
+          test -f BreakloAI-Android-Web-Project-FIXED3.zip
+          unzip -q BreakloAI-Android-Web-Project-FIXED3.zip -d extracted
           test -f extracted/BreakloAI-Project/package.json
-          test -f extracted/BreakloAI-Project/capacitor.config.js
+          test -f extracted/BreakloAI-Project/capacitor.config.json
+          grep -q '"appId": "in.sangam.breakloai"' extracted/BreakloAI-Project/capacitor.config.json
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -41,13 +43,18 @@ jobs:
         working-directory: extracted/BreakloAI-Project
         run: npm run build
 
+      - name: Verify Capacitor config
+        working-directory: extracted/BreakloAI-Project
+        run: |
+          node -e "const c=require('./capacitor.config.json'); if(!c.appId) process.exit(1); console.log('Capacitor appId:', c.appId)"
+
       - name: Generate Android project
         working-directory: extracted/BreakloAI-Project
-        run: npx cap add android
+        run: npx cap add android --config capacitor.config.json
 
       - name: Sync Android project
         working-directory: extracted/BreakloAI-Project
-        run: npx cap sync android
+        run: npx cap sync android --config capacitor.config.json
 
       - name: Build debug APK
         working-directory: extracted/BreakloAI-Project/android
@@ -61,4 +68,3 @@ jobs:
           name: BreakloAI-debug-apk
           path: extracted/BreakloAI-Project/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-          
